@@ -5,8 +5,10 @@ program that takes the 50 most talked about stocks on WallStreetBets, analyzeing
 - Python
 - APIs
 - Version Control
-- familiarize myself with pandas
-- Backend and maybe frontend (flask) development
+- Django
+- GraphQL
+- Natural Language Processing
+
 
 # APIs used: 
 - Tradestie Reddit API
