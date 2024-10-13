@@ -6,7 +6,7 @@ class RedditPost(models.Model):
     title = models.TextField()
     body = models.TextField ()
     sentiment_score = models.FloatField()
-    stock_mentioned = models.Charfield(max_length=10)
+    stock_mentioned = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

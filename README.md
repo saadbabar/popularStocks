@@ -1,5 +1,5 @@
 # popularStocks
-program that takes the 50 most talked about stocks on WallStreetBets, analyzeing their 50 day performance and returning best top 10 stocks
+This Program extracts latest data from the wallstreetbets subreddit and performs sentimental analysis to return which stocks are popular at the moment
 
 # Goals:
 - Python
@@ -11,5 +11,5 @@ program that takes the 50 most talked about stocks on WallStreetBets, analyzeing
 
 
 # APIs used: 
-- Tradestie Reddit API
-- Alpacas API
+- Reddit API
+- Finnhub API
