@@ -3,11 +3,15 @@ This Program extracts latest data from the wallstreetbets subreddit and performs
 
 # Goals:
 - Python
+- TypeScript
+- d3.js
 - APIs
 - Version Control
 - Django
-- GraphQL
+- REST APIs
 - Natural Language Processing
+- Celery Task Automater
+- Webscraping with Pandas
 
 
 # APIs used: 
