@@ -153,7 +153,26 @@ def analyze_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()
     sentiment = analyzer.polarity_scores(text)
     return sentiment['compound']
-        
+
+def combine_duplicates(dictionary: dict[str, float]) -> dict[str, float]:
+    my_dict: dict[str, float] = {}
+    count_dict: dict[str, int] = {}  
+
+    for key, value in dictionary.items():
+        if key in my_dict:
+            # Update the total value and the count
+            my_dict[key] += value
+            count_dict[key] += 1
+        else:
+            # Initialize the key with its first occurrence
+            my_dict[key] = value
+            count_dict[key] = 1
+
+    # Calculate the average for each key
+    for key in my_dict:
+        my_dict[key] /= count_dict[key]
+
+    return my_dict
         
 def fetch_reddit_posts(company_tickers, fmp_company_tickers):
     reddit = praw.Reddit (

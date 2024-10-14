@@ -5,7 +5,7 @@ from rest_framework import viewsets, generics
 from datetime import date
 import requests
 from django.http import JsonResponse
-from .reddit import fetch_reddit_posts, fetch_fmp_company_tickers, fetch_company_tickers, get_todays_extractions, compare_td_with_top
+from .reddit import fetch_reddit_posts, fetch_fmp_company_tickers, fetch_company_tickers, get_todays_extractions, compare_td_with_top, combine_duplicates
 from .data import fmp_key
 
 
@@ -39,7 +39,8 @@ def get_stock_sentiment(requests):
     
     if td_extractions:
         # Compare with top movers
-        result = compare_td_with_top(fmp_key, td_extractions)
+        combined_sentiment = combine_duplicates(td_extractions)
+        result = compare_td_with_top(fmp_key, combined_sentiment)
         return JsonResponse(result)  # Return result as JSON
     else:
         return JsonResponse({"error": "No extractions found"})
