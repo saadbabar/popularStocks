@@ -3,3 +3,7 @@ psycopg2-binary
 praw
 django-extensions
 finnhub-python
+pdbp
+nltk
+pandas
+lxml
