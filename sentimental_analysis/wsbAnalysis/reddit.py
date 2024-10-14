@@ -6,6 +6,7 @@ import pandas as pd
 import nltk
 from nltk.corpus import stopwords # remove unneccary words from sentence like you
 from .data import COMMON_SUFFIXES, company_tickers_manual, words_to_avoid
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 nltk.download('stopwords')
 
 stop_words=set(stopwords.words('english'))
@@ -97,6 +98,11 @@ def extract_stock_symbol(string):
             return result_df['Symbol'].values[0]
 
     return None
+
+def analyze_sentiment(text):
+    analyzer = SentimentIntensityAnalyzer()
+    sentiment = analyzer.polarity_scores(text)
+    return sentiment['compound']
         
         
 def fetch_reddit_posts():
@@ -108,6 +114,15 @@ def fetch_reddit_posts():
 
     subreddit = reddit.subreddit('wallstreetbets')
     for submission in subreddit.hot(limit=12):
-        print(filtered_sentence(submission.title))
         stock = extract_stock_symbol(filtered_sentence(submission.title))
-        print(stock)
+        if stock == None:
+            continue
+        sentiment_score = analyze_sentiment(submission.title + submission.selftext)
+
+        RedditPost.objects.create(
+            post_id=submission.id,
+            title = submission.title,
+            body=submission.selftext,
+            sentiment_score=sentiment_score,
+            stock_mentioned=stock
+        )

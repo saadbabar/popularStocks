@@ -6,3 +6,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         fetch_reddit_posts()
+        self.stdout.write(self.style.SUCCESS('Successfully fetched'))
