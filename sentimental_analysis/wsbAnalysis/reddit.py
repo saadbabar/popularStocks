@@ -89,7 +89,7 @@ company_tickers=fetch_company_tickers()  # Dictionary [{'apple','AAPL'}] for fin
 fmp_company_tickers = fetch_fmp_company_tickers(fmp_key) # for fmp call
 
 
-def extract_stock_symbol(string):
+def extract_stock_symbol(string, company_tickers, fmp_company_tickers):
     "Takes string and parses for stock ticker"
     words = string.split()
 
@@ -104,11 +104,11 @@ def extract_stock_symbol(string):
 
         # commented out finnhub api call for now
         
-        # if word.lower() in company_tickers:
-        #     return company_tickers[word.lower()] # this case checks in finnhub
+        if word.lower() in company_tickers:
+            return company_tickers[word.lower()] # this case checks in finnhub
         
-        # if word.upper() in company_tickers.values():
-        #     return word.upper() # handles case where someone says aapl or AAPL, also checks in finnhubb
+        if word.upper() in company_tickers.values():
+            return word.upper() # handles case where someone says aapl or AAPL, also checks in finnhubb
         
         if word.lower() in fmp_company_tickers:
             return fmp_company_tickers[word.lower()] # this case and next case check data.py
@@ -122,18 +122,32 @@ def extract_stock_symbol(string):
 
 
 def get_todays_extractions():
-    "returns today's hot posts"
+    "returns today's hot posts also cleans the response by only giving us sentiment score and ticker"
     url = 'http://localhost:8000/posts/today/'
     response = requests.get(url)
 
     if response.status_code == 200:
         reddit_data = response.json()
-        return reddit_data
+        cleaned_data = {stock['stock_mentioned']: stock['sentiment_score'] for stock in reddit_data}
+        return cleaned_data
     else:
         print(f"Failed to get data: {response.status_code}")
         return None
-    
 
+def compare_td_with_top(api_key, stock_data):
+    "This function takes the get_todays_extraction function ann makes sure that the companies are top movers"
+    url = f"https://financialmodelingprep.com/api/v3/stock_market/actives?apikey={api_key}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        top_movers = response.json()
+        extracted_movers = {stock['symbol'] for stock in top_movers}
+
+        filter_daily_movers = {stock: score for stock, score in stock_data.items() if stock in extracted_movers}
+        return filter_daily_movers 
+    else:
+        print(f"failed to fulfill task: {response.status_code}")
+        return None
 
 def analyze_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()
@@ -141,7 +155,7 @@ def analyze_sentiment(text):
     return sentiment['compound']
         
         
-def fetch_reddit_posts():
+def fetch_reddit_posts(company_tickers, fmp_company_tickers):
     reddit = praw.Reddit (
         client_id = '7hzi_mwWJPDsizSxbZvSAg',
         client_secret = 'cduDvCKuWtewpRO8mUu0mDylbMLTOw',
@@ -150,10 +164,13 @@ def fetch_reddit_posts():
 
     subreddit = reddit.subreddit('wallstreetbets')
     for submission in subreddit.hot(limit=12):
-        stock = extract_stock_symbol(filtered_sentence(submission.title))
+        stock = extract_stock_symbol(filtered_sentence(submission.title), company_tickers, fmp_company_tickers)
         if stock == None:
             continue
         sentiment_score = analyze_sentiment(submission.title + submission.selftext)
+
+        if RedditPost.objects.filter(post_id=submission.id).exists():
+            continue
 
         # If post already exists, then skip
         RedditPost.objects.get_or_create(
