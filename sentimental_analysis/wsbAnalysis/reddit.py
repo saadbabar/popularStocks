@@ -2,26 +2,15 @@ import praw
 import re
 from .models import RedditPost
 import finnhub # Using this to get all company names with tickers
-import pandas as pd
 import nltk
+import requests
 from nltk.corpus import stopwords # remove unneccary words from sentence like you
-from .data import COMMON_SUFFIXES, company_tickers_manual, words_to_avoid
+from .data import COMMON_SUFFIXES,COMMON_PREFIXES,  company_tickers_manual, words_to_avoid, fmp_key
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 nltk.download('stopwords')
 
 stop_words=set(stopwords.words('english'))
 
-
-url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-sp500_list = pd.read_html(url)[0] # get first table in html
-
-def manual_web_search(company_name, company_list):
-    "This check is for when finnhub cannot find ticker"
-    matches = company_list[company_list['Security'].str.contains(company_name, case=False)]
-    if not matches.empty:
-        return matches[[ 'Symbol']]
-    else:
-        None
 
 finnhub_client = finnhub.Client(api_key='cs625mhr01qv8tfqdffgcs625mhr01qv8tfqdfg0')
 
@@ -50,11 +39,23 @@ def clean_name(name):
     tesla, inc will become tesla
     This function is to clean up finnhub data
     """
+    if name is None:
+        return 'unknown'
     name = name.lower()
-    for suffix in COMMON_SUFFIXES:
-        name = re.sub(r'\b' + suffix + r'\b', '', name)
 
-    return name.strip()
+    # Remove common prefixes
+    for prefix in COMMON_PREFIXES:
+        name = re.sub(r'^' + re.escape(prefix) + r'\s+', '', name)  # Match prefix at the start
+
+    for suffix in COMMON_SUFFIXES:
+        name = re.sub(r'\b' + re.escape(suffix) + r'[\.,]*\b', '', name)
+
+    name = re.sub(r'[.,\s]+$', '', name)
+
+    # Remove multiple spaces and trim the name
+    name = re.sub(r'\s+', ' ', name).strip()
+
+    return name
 
 
 def fetch_company_tickers():
@@ -64,8 +65,28 @@ def fetch_company_tickers():
 
     return company_tickers
 
+def fetch_fmp_company_tickers(api_key):
+    url = f"https://financialmodelingprep.com/api/v3/stock/list?apikey={api_key}"
 
-company_tickers=fetch_company_tickers()  # Dictionary [{'apple','AAPL'}]
+    response = requests.get(url)
+    if response.status_code ==200:
+        all_companies = response.json()
+        cmp_tickers = {clean_name(stock['name']): stock['symbol'] 
+                       for stock in all_companies 
+                       if (stock.get('exchangeShortName') in ['NYSE', 'NASDAQ']) 
+                       and (stock.get('type') == 'stock')}
+        # for stock in all_companies:
+        #     if 'TSLA' in stock.values():
+        #         print(f"Original: {stock['name']}, Cleaned: {clean_name(stock['name'])}")
+
+        return cmp_tickers
+    else:
+        print(f"error getting data from endpoint: {response.status_code}")
+        return None
+
+
+company_tickers=fetch_company_tickers()  # Dictionary [{'apple','AAPL'}] for finnhub call
+fmp_company_tickers = fetch_fmp_company_tickers(fmp_key) # for fmp call
 
 
 def extract_stock_symbol(string):
@@ -80,24 +101,39 @@ def extract_stock_symbol(string):
 
         if word in words_to_avoid:
             continue
+
+        # commented out finnhub api call for now
         
-        if word.lower() in company_tickers:
-            return company_tickers[word.lower()] # this case checks in finnhub
+        # if word.lower() in company_tickers:
+        #     return company_tickers[word.lower()] # this case checks in finnhub
         
-        if word.upper() in company_tickers.values():
-            return word.upper() # handles case where someone says aapl or AAPL, also checks in finnhubb
+        # if word.upper() in company_tickers.values():
+        #     return word.upper() # handles case where someone says aapl or AAPL, also checks in finnhubb
         
-        if word.lower() in company_tickers_manual:
-            return company_tickers_manual[word.lower()] # this case and next case check data.py
+        if word.lower() in fmp_company_tickers:
+            return fmp_company_tickers[word.lower()] # this case and next case check data.py
         
-        if word in company_tickers_manual.values():
-            return company_tickers_manual(word)
+        if word.upper() in fmp_company_tickers.values():
+            return word.upper()
         
-        result_df = manual_web_search(word, sp500_list)  # Call the function again
-        if result_df is not None and not result_df.empty:  # Check if the DataFrame is not empty
-            return result_df['Symbol'].values[0]
+        
 
     return None
+
+
+def get_todays_extractions():
+    "returns today's hot posts"
+    url = 'http://localhost:8000/posts/today/'
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        reddit_data = response.json()
+        return reddit_data
+    else:
+        print(f"Failed to get data: {response.status_code}")
+        return None
+    
+
 
 def analyze_sentiment(text):
     analyzer = SentimentIntensityAnalyzer()
@@ -119,10 +155,14 @@ def fetch_reddit_posts():
             continue
         sentiment_score = analyze_sentiment(submission.title + submission.selftext)
 
-        RedditPost.objects.create(
+        # If post already exists, then skip
+        RedditPost.objects.get_or_create(
             post_id=submission.id,
             title = submission.title,
             body=submission.selftext,
             sentiment_score=sentiment_score,
             stock_mentioned=stock
         )
+
+if __name__ == "__main__":
+    get_todays_extractions()

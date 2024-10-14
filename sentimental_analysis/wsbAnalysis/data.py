@@ -3,6 +3,7 @@
 COMMON_SUFFIXES = [
     # can add more later
     'inc',
+    'inc.',
     'corp',
     'corporation',
     'ltd',
@@ -10,7 +11,13 @@ COMMON_SUFFIXES = [
     'group', 
     'plc',
     'co',
-    'llc'
+    'llc',
+    'automotive',
+    'company',
+]
+
+COMMON_PREFIXES = [
+    'the',
 ]
 
 company_tickers_manual = {
@@ -18,4 +25,16 @@ company_tickers_manual = {
     'intuitive machines': 'LUNR',
 }
 
-words_to_avoid = ['market', 'moon', 'loop', 'way']
+words_to_avoid = ['market',
+                    'moon',
+                    'loop',
+                    'way',
+                    'me',
+                    'china',
+                    'usa',
+                    'gains',
+                    'sell'
+                    'dumb'
+                    ]
+
+fmp_key = 'LE923MJW26HBMAVEfU7MitLTkonxVMxR'

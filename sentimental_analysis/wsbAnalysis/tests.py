@@ -1,5 +1,6 @@
 from django.test import TestCase
-from wsbAnalysis.reddit import fetch_company_tickers, clean_name, extract_stock_symbol, remove_stopwords, filtered_sentence
+from wsbAnalysis.reddit import fetch_company_tickers, clean_name, extract_stock_symbol, remove_stopwords, filtered_sentence, fetch_fmp_company_tickers
+from .data import fmp_key
 import pdbp
 
 # Create your tests here.
@@ -34,10 +35,19 @@ class FetchCompanyTickersTest(TestCase):
         self.assertEqual(extract_stock_symbol(sentence3), 'RKLB')
         # breakpoint()
         self.assertEqual(extract_stock_symbol(sentence4), 'BA')
-        breakpoint()
+        # breakpoint()
         self.assertEqual(extract_stock_symbol(sentence5), 'RIVN')
 
     def test_filtered_sentence(self):
         sentence1 = 'Boeing’s Endless Doom Loop Gives Respite New CEO'
         # breakpoint()
         self.assertEqual(filtered_sentence(sentence1),'Boeing Endless Doom Loop Gives Respite New CEO')
+
+    def test_fmp_tikcers(self):
+        result = fetch_fmp_company_tickers(fmp_key)
+        print(result)
+        self.assertIn('tesla', result)
+        self.assertIn('intuitive machines', result)
+        self.assertIn('rivian', result)
+        self.assertIn('boeing', result)
+        
