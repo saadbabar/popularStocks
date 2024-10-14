@@ -8,3 +8,4 @@ nltk
 pandas
 lxml
 vaderSentiment
+djangorestframework
