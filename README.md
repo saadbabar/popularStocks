@@ -1,36 +1,56 @@
 # WallStreetBets NLP Sentiment Analyzer
-This Program extracts latest data from the wallstreetbets subreddit and performs sentimental analysis to return which stocks are popular at the moment.
 
-For this program, I performed multiple full-stack related tasks like:
-- Using external API endpoints for data that can be used within my program(Reddit's API and Python PRAW library, and Financial Modeling Prep API endpoints to get specific data for symbols and company names within US markets (NYSE and NASDAQ))
+This program extracts the latest data from the WallStreetBets subreddit and performs sentiment analysis to identify which stocks are popular at the moment.
 
-- Created multiple modules/functions to clean incoming raw JSON data that can later be used with the program
+### Key Features & Tasks
 
-    - For example i created multiple functions to clean names of the companies. For example most people on Reddit won't say "The Boeing Company" or "Rivian Automotive, Inc", they'll say things like "Boeing" or "Rivian", respectively.
+- **API Integration**:
+    - Utilized external API endpoints, including Reddit's API via Python PRAW library and the Financial Modeling Prep API, to gather data on stock symbols and company names within US markets (NYSE and NASDAQ).
     
-    - Also i created functions to parse out punctuation from names, as well "'s" because the goal is to reach as many way people can say something and strip everything so that only the name is left. This is important because people can say something multiple different ways since we are extracting what they are saying from the title of a reddit post
+- **Data Cleaning & Preprocessing**:
+    - Developed multiple functions to clean raw JSON data, making it usable within the program.
+    - Created functions to normalize company names as users often refer to them in a simplified form. For example, Reddit users typically say "Boeing" instead of "The Boeing Company" or "Rivian" instead of "Rivian Automotive, Inc."
+    - Implemented methods to parse out punctuation, possessive forms (e.g., "'s"), and other unnecessary elements, leaving only the company name. This ensures consistency and accounts for variations in how people refer to stocks.
 
-- I created unit tests for the functions as well as Python Scripts to ensure function performance and reliability.
+- **Unit Testing**:
+    - Developed unit tests for key functions to ensure reliability and performance across the project.
+    - Wrote Python scripts to automate testing of individual functions.
 
-- Used NLP libraries like VADER to perform sentiment analysis on reddit titles and text bodies to see what is the general outlook of a particular stock
+- **Sentiment Analysis**:
+    - Integrated the VADER sentiment analysis library to assess the sentiment of Reddit post titles and text bodies. This provides a general outlook on a particular stock based on user posts.
+    
+- **Database Management**:
+    - Designed the SQL schema using the Django framework and connected it to a PostgreSQL database.
+    - Created the necessary data models and schema to store the extracted stock data and their associated sentiment.
 
-- Created SQL schema in Django framework and linked it to database in PostgreSQL
+- **API Development**:
+    - Built REST API endpoints using Django REST Framework:
+        - An endpoint to fetch all data collected so far.
+        - An endpoint to fetch data specific to the current day (used for the frontend dashboard).
+        
+- **Frontend Development**:
+    - Used TypeScript to send a request to the Django API and retrieve data for the current day.
+    - Implemented an `await/fetch` request to handle the data and pass it to a D3.js-based graph for visualization.
+    - Developed a dashboard where users can visualize stock data and sentiment trends over time.
 
-- I developed REST API endpoints using the Django REST Framework to get all the data that has been fetched so far and the data that is specific to a day(necessary for frontend where the data for the day will passed for visualization in the dashboard)
+- **Version Control**:
+    - Strengthened version control skills throughout the project by managing multiple branches and collaborating with others through Git and GitHub.
 
-- I also strengthened version control skills in this project
+### Notes:
 
-- so basically we pass in the request into typescipt where the data of today lies and we pass it into a await/fetch request and then typescript will take that data and make into a graph
+- Both the Django server (inside the `sentimental_analysis` directory) and the frontend dashboard (inside the `stock-sentiment-dashboard` directory) must be active for the full application to run.
+    - To start the Django server: `python3 manage.py runserver`
+    - To start the frontend dashboard: `npm run start`
 
-- Note to Self: Both the django server (in sentimental_analysis) (python3 manage.py runserver) and in the stock-sentiment-dashboard (npm run start) must be active for it to run
+---
 
-Final Data to be processed by frontend:
+This program is a full-stack implementation that integrates APIs, processes data, and presents it visually, providing insights into stock popularity on WallStreetBets.
+
+Final Data processed by backend which is given to frontend:
 ![Local Image](./exampleredirect.png)
 
-Data Visuals processed by frontend:
+Data Visuals processed by frontend with given data:
 ![Local Image](./exampleoutput.png)
-
-
 
 # Goals:
 - Python
