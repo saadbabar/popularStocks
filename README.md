@@ -20,7 +20,17 @@ For this program, I performed multiple full-stack related tasks like:
 
 - I also strengthened version control skills in this project
 
-- More to come
+- so basically we pass in the request into typescipt where the data of today lies and we pass it into a await/fetch request and then typescript will take that data and make into a graph
+
+- Note to Self: Both the django server (in sentimental_analysis) (python3 manage.py runserver) and in the stock-sentiment-dashboard (npm run start) must be active for it to run
+
+Final Data to be processed by frontend:
+![Local Image](./exampleredirect.png)
+
+Data Visuals processed by frontend:
+![Local Image](./exampleoutput.png)
+
+
 
 # Goals:
 - Python

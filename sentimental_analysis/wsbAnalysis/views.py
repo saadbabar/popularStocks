@@ -7,6 +7,10 @@ import requests
 from django.http import JsonResponse
 from .reddit import fetch_reddit_posts, fetch_fmp_company_tickers, fetch_company_tickers, get_todays_extractions, compare_td_with_top, combine_duplicates
 from .data import fmp_key
+from django.utils import timezone
+import pytz
+from datetime import timedelta
+import logging
 
 
 # Create your views here.
@@ -19,12 +23,38 @@ class RedditPostViewSet(viewsets.ModelViewSet):
     queryset = RedditPost.objects.all()
     serializer_class = RedditPostSerializer
 
+
+logger = logging.getLogger(__name__)
+
 class TodayRedditPostList(generics.ListAPIView):
     serializer_class = RedditPostSerializer
 
     def get_queryset(self):
-        today =  date.today()
-        return RedditPost.objects.filter(created_at__date=today)
+        # Define the user's local time zone
+        user_timezone = pytz.timezone('America/New_York')  # Eastern Time Zone
+
+        # Get the current time in the user's local time zone
+        now_local = timezone.now().astimezone(user_timezone)
+
+        # Start and end of the day in the user's local time zone
+        start_of_day_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day_local = start_of_day_local + timedelta(days=1)
+
+        # Convert the start and end times back to UTC for filtering
+        start_of_day_utc = start_of_day_local.astimezone(pytz.utc)
+        end_of_day_utc = end_of_day_local.astimezone(pytz.utc)
+
+        # Log times for debugging
+        logger.info(f"Server current time (UTC): {timezone.now()}")
+        logger.info(f"Local time now ({user_timezone}): {now_local}")
+        logger.info(f"Filtering posts from {start_of_day_local} to {end_of_day_local} in local time")
+        logger.info(f"Corresponding UTC range from {start_of_day_utc} to {end_of_day_utc}")
+
+        # Filter RedditPost created within today's date in user's local time zone
+        queryset = RedditPost.objects.filter(created_at__range=(start_of_day_utc, end_of_day_utc))
+
+        logger.info(f"Number of posts found: {queryset.count()}")
+        return queryset
 
 def get_stock_sentiment(requests):
     # Fetch the necessary data

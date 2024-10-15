@@ -10,3 +10,5 @@ lxml
 vaderSentiment
 djangorestframework
 requests
+pytz
+jango-cors-headers
