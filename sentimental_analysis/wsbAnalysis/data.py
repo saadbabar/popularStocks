@@ -34,7 +34,10 @@ words_to_avoid = ['market',
                     'usa',
                     'gains',
                     'sell'
-                    'dumb'
+                    'dumb',
+                    'future',
+                    'past',
+                    'equity',
                     ]
 
 fmp_key = 'LE923MJW26HBMAVEfU7MitLTkonxVMxR'

@@ -96,13 +96,14 @@ def extract_stock_symbol(string, company_tickers, fmp_company_tickers):
     for word in words:
         if len(word) < 2:
             continue
-        if word[0] == "$":
+        if word[0] == "$" and not word[1].isdigit():
             return word[1:]  # returns ticker without $
 
-        if word in words_to_avoid:
+        if word.lower() in words_to_avoid:
             continue
 
-        # commented out finnhub api call for now
+        if len(word) >= 3 and word[:3].isupper() and word.isalpha():
+            return word
         
         if word.lower() in company_tickers:
             return company_tickers[word.lower()] # this case checks in finnhub

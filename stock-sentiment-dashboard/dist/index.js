@@ -57,7 +57,7 @@ function getStockData() {
 }
 function createBarChart() {
     return __awaiter(this, void 0, void 0, function () {
-        var data, width, height, margin, numericValues, minValue, maxValue, x, y, svg, zeroY, barGroup;
+        var data, width, height, margin, numericValues, minValue, maxValue, x, y, svg, zeroY, barGroup, bars, tooltip, legendData, legend;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getStockData()];
@@ -67,77 +67,134 @@ function createBarChart() {
                         console.error('No valid data to display');
                         return [2 /*return*/];
                     }
-                    width = 500;
-                    height = 300;
-                    margin = { top: 20, right: 30, bottom: 40, left: 40 };
+                    width = 800;
+                    height = 500;
+                    margin = { top: 60, right: 40, bottom: 80, left: 70 };
                     numericValues = Object.values(data);
                     minValue = d3.min(numericValues) || 0;
                     maxValue = d3.max(numericValues) || 1;
                     x = d3.scaleBand()
                         .domain(Object.keys(data))
                         .range([margin.left, width - margin.right])
-                        .padding(0.1);
+                        .padding(0.2);
+                    if (Object.keys(data).length === 1) {
+                        x.range([width / 2 - 50, width / 2 + 50]); // Ensure bar has decent width
+                    }
                     y = d3.scaleLinear()
-                        .domain([minValue, maxValue]) // Allows for negative values
+                        .domain([minValue > 0 ? 0 : minValue, maxValue])
                         .nice()
                         .range([height - margin.bottom, margin.top]);
                     svg = d3.select('#chart')
+                        .html('') // Clear any existing content
                         .append('svg')
                         .attr('width', width)
                         .attr('height', height);
                     zeroY = y(0);
-                    barGroup = svg.append('g')
-                        .selectAll('g')
+                    barGroup = svg.append('g');
+                    bars = barGroup.selectAll('rect')
                         .data(Object.entries(data))
                         .enter()
-                        .append('g')
-                        .attr('transform', function (d) { return "translate(".concat(x(d[0]), ", 0)"); });
-                    // Append rectangles (bars)
-                    barGroup.append('rect')
-                        .attr('x', 0)
+                        .append('rect')
+                        .attr('x', function (d) { return x(d[0]); })
                         .attr('y', function (d) {
                         var value = d[1];
                         return value >= 0 ? y(value) : zeroY;
                     })
                         .attr('width', x.bandwidth())
-                        .attr('height', function (d) {
-                        var value = d[1];
-                        return Math.abs(y(value) - y(0));
+                        .attr('height', function (d) { return Math.abs(y(d[1]) - y(0)); })
+                        .attr('fill', function (d) { return d[1] >= 0 ? 'green' : 'crimson'; })
+                        .attr('opacity', 0.8);
+                    tooltip = d3.select('#chart').append('div')
+                        .attr('class', 'tooltip')
+                        .style('display', 'none');
+                    bars.on('mouseover', function (event, d) {
+                        d3.select(this).attr('opacity', 1);
+                        tooltip.style('display', 'inline-block')
+                            .html("<strong>".concat(d[0], "</strong><br>Sentiment Score: ").concat(d[1].toFixed(4)));
                     })
-                        .attr('fill', function (d) { return d[1] >= 0 ? 'steelblue' : 'crimson'; });
-                    // Append text labels
-                    barGroup.append('text')
-                        .attr('x', x.bandwidth() / 2)
-                        .attr('y', function (d) {
-                        var value = d[1];
-                        if (value >= 0) {
-                            // For positive values, place text above the bar
-                            return y(value) - 5;
-                        }
-                        else {
-                            // For negative values, place text below the bar
-                            return y(value) + Math.abs(y(value) - y(0)) + 15;
-                        }
+                        .on('mousemove', function (event) {
+                        tooltip.style('left', event.pageX + 15 + 'px')
+                            .style('top', event.pageY - 35 + 'px');
                     })
-                        .attr('text-anchor', 'middle')
-                        .attr('font-size', '12px')
-                        .attr('fill', 'black')
-                        .text(function (d) { return d[1].toFixed(4); }); // Display the sentiment score with 4 decimal places
+                        .on('mouseout', function () {
+                        d3.select(this).attr('opacity', 0.8);
+                        tooltip.style('display', 'none');
+                    });
                     // Add x-axis
                     svg.append('g')
                         .attr('transform', "translate(0,".concat(zeroY, ")"))
-                        .call(d3.axisBottom(x));
+                        .call(d3.axisBottom(x))
+                        .selectAll('text')
+                        .attr('transform', 'rotate(-45)')
+                        .attr('text-anchor', 'end')
+                        .attr('dx', '-0.6em')
+                        .attr('dy', '0.15em');
                     // Add y-axis
                     svg.append('g')
                         .attr('transform', "translate(".concat(margin.left, ",0)"))
                         .call(d3.axisLeft(y));
+                    // Add x-axis label
+                    svg.append('text')
+                        .attr('x', width / 2)
+                        .attr('y', height - margin.bottom / 3)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '16px')
+                        .text('Stock Ticker');
+                    // Add y-axis label
+                    svg.append('text')
+                        .attr('transform', 'rotate(-90)')
+                        .attr('x', -height / 2)
+                        .attr('y', margin.left / 3)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '16px')
+                        .text('Sentiment Score');
+                    // Add chart title
+                    svg.append('text')
+                        .attr('x', width / 2)
+                        .attr('y', margin.top / 2)
+                        .attr('text-anchor', 'middle')
+                        .attr('font-size', '22px')
+                        .attr('font-weight', 'bold')
+                        .text('Stock Sentiment Analysis');
                     // Add a line at y=0
                     svg.append('line')
                         .attr('x1', margin.left)
                         .attr('x2', width - margin.right)
                         .attr('y1', zeroY)
                         .attr('y2', zeroY)
-                        .attr('stroke', 'black');
+                        .attr('stroke', '#333');
+                    // Add gridlines
+                    svg.append('g')
+                        .attr('class', 'grid')
+                        .attr('transform', "translate(".concat(margin.left, ",0)"))
+                        .call(function (g) {
+                        g.call(d3.axisLeft(y)
+                            .ticks(10)
+                            .tickSize(-width + margin.left + margin.right)
+                            .tickFormat(function () { return ''; }));
+                    });
+                    legendData = [
+                        { label: 'Positive Sentiment', color: 'green' },
+                        { label: 'Negative Sentiment', color: 'crimson' },
+                    ];
+                    legend = svg.selectAll('.legend')
+                        .data(legendData)
+                        .enter()
+                        .append('g')
+                        .attr('class', 'legend')
+                        .attr('transform', function (d, i) { return "translate(0, ".concat(i * 20, ")"); });
+                    legend.append('rect')
+                        .attr('x', width - margin.right - 18)
+                        .attr('y', margin.top / 2)
+                        .attr('width', 18)
+                        .attr('height', 18)
+                        .style('fill', function (d) { return d.color; });
+                    legend.append('text')
+                        .attr('x', width - margin.right - 24)
+                        .attr('y', margin.top / 2 + 9)
+                        .attr('dy', '.35em')
+                        .style('text-anchor', 'end')
+                        .text(function (d) { return d.label; });
                     return [2 /*return*/];
             }
         });

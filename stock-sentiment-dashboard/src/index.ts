@@ -20,11 +20,11 @@ async function createBarChart() {
         return;
     }
 
-    const width = 500;
-    const height = 300;
-    const margin = { top: 20, right: 30, bottom: 40, left: 40 };
+    const width = 800;
+    const height = 500;
+    const margin = { top: 60, right: 40, bottom: 80, left: 70 };
 
-    // Ensure all values are numbers (already ensured by type)
+    // Extract numerical values from data
     const numericValues = Object.values(data);
 
     const minValue = d3.min(numericValues) || 0;
@@ -33,15 +33,20 @@ async function createBarChart() {
     const x = d3.scaleBand<string>()
         .domain(Object.keys(data))
         .range([margin.left, width - margin.right])
-        .padding(0.1);
+        .padding(0.2);
+
+    if (Object.keys(data).length === 1) {
+        x.range([width / 2 - 50, width / 2 + 50]); // Ensure bar has decent width
+    }
 
     // Adjust the y-scale to accommodate negative values
     const y = d3.scaleLinear()
-        .domain([minValue, maxValue])  // Allows for negative values
+        .domain([minValue > 0 ? 0 : minValue, maxValue])
         .nice()
         .range([height - margin.bottom, margin.top]);
 
     const svg = d3.select('#chart')
+        .html('') // Clear any existing content
         .append('svg')
         .attr('width', width)
         .attr('height', height);
@@ -49,55 +54,83 @@ async function createBarChart() {
     // Define the zero position (baseline)
     const zeroY = y(0);
 
-    // Create a group for each bar (rect and text)
-    const barGroup = svg.append('g')
-        .selectAll<SVGGElement, [string, number]>('g')
-        .data(Object.entries(data))
-        .enter()
-        .append('g')
-        .attr('transform', d => `translate(${x(d[0])}, 0)`);
+    // Create a group for the bars
+    const barGroup = svg.append('g');
 
     // Append rectangles (bars)
-    barGroup.append('rect')
-        .attr('x', 0)
+    const bars = barGroup.selectAll('rect')
+        .data(Object.entries(data))
+        .enter()
+        .append('rect')
+        .attr('x', d => x(d[0])!)
         .attr('y', d => {
             const value = d[1];
             return value >= 0 ? y(value) : zeroY;
         })
         .attr('width', x.bandwidth())
-        .attr('height', d => {
-            const value = d[1];
-            return Math.abs(y(value) - y(0));
-        })
-        .attr('fill', d => d[1] >= 0 ? 'steelblue' : 'crimson');
+        .attr('height', d => Math.abs(y(d[1]) - y(0)))
+        .attr('fill', d => d[1] >= 0 ? 'green' : 'crimson')
+        .attr('opacity', 0.8);
 
-    // Append text labels
-    barGroup.append('text')
-        .attr('x', x.bandwidth() / 2)
-        .attr('y', d => {
-            const value = d[1];
-            if (value >= 0) {
-                // For positive values, place text above the bar
-                return y(value) - 5;
-            } else {
-                // For negative values, place text below the bar
-                return y(value) + Math.abs(y(value) - y(0)) + 15;
-            }
+    // Add tooltips on hover
+    const tooltip = d3.select('#chart').append('div')
+        .attr('class', 'tooltip')
+        .style('display', 'none');
+
+    bars.on('mouseover', function (event, d) {
+        d3.select(this).attr('opacity', 1);
+        tooltip.style('display', 'inline-block')
+            .html(`<strong>${d[0]}</strong><br>Sentiment Score: ${d[1].toFixed(4)}`);
+    })
+        .on('mousemove', function (event) {
+            tooltip.style('left', event.pageX + 15 + 'px')
+                .style('top', event.pageY - 35 + 'px');
         })
-        .attr('text-anchor', 'middle')
-        .attr('font-size', '12px')
-        .attr('fill', 'black')
-        .text(d => d[1].toFixed(4));  // Display the sentiment score with 4 decimal places
+        .on('mouseout', function () {
+            d3.select(this).attr('opacity', 0.8);
+            tooltip.style('display', 'none');
+        });
 
     // Add x-axis
     svg.append('g')
         .attr('transform', `translate(0,${zeroY})`)
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x))
+        .selectAll('text')
+        .attr('transform', 'rotate(-45)')
+        .attr('text-anchor', 'end')
+        .attr('dx', '-0.6em')
+        .attr('dy', '0.15em');
 
     // Add y-axis
     svg.append('g')
         .attr('transform', `translate(${margin.left},0)`)
         .call(d3.axisLeft(y));
+
+    // Add x-axis label
+    svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', height - margin.bottom / 3)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '16px')
+        .text('Stock Ticker');
+
+    // Add y-axis label
+    svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', margin.left / 3)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '16px')
+        .text('Sentiment Score');
+
+    // Add chart title
+    svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', margin.top / 2)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '22px')
+        .attr('font-weight', 'bold')
+        .text('Stock Sentiment Analysis');
 
     // Add a line at y=0
     svg.append('line')
@@ -105,7 +138,21 @@ async function createBarChart() {
         .attr('x2', width - margin.right)
         .attr('y1', zeroY)
         .attr('y2', zeroY)
-        .attr('stroke', 'black');
+        .attr('stroke', '#333');
+
+    // Add gridlines
+    svg.append('g')
+        .attr('class', 'grid')
+        .attr('transform', `translate(${margin.left},0)`)
+        .call((g) => {
+            g.call(
+                d3.axisLeft(y)
+                    .ticks(10)
+                    .tickSize(-width + margin.left + margin.right)
+                    .tickFormat(() => '')
+            );
+        });
+
 }
 
 // Create the bar chart

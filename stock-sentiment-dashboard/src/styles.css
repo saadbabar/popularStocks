@@ -1,0 +1,24 @@
+/* Tooltip styling */
+#chart .tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 8px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    pointer-events: none;
+    color: #333;
+}
+
+/* Gridline styling */
+.grid line {
+    stroke: lightgrey;
+    stroke-opacity: 0.7;
+    shape-rendering: crispEdges;
+    stroke-dasharray: 3;
+}
+
+.grid path {
+    stroke-width: 0;
+}
