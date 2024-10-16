@@ -52,8 +52,10 @@ Final Data processed by backend which is given to frontend:
 Data Visuals processed by frontend with given data:
 ![Local Image](./exampleoutput.png)
 
-Video Showcase:
-<iframe width="560" height="315" src="https://www.youtube.com/watch?v=yaM3HXw87Ho" frameborder="0" allowfullscreen></iframe>
+## Video Showcase
+
+[![Watch the video](https://img.youtube.com/vi/yaM3HXw87Ho/maxresdefault.jpg)](https://www.youtube.com/watch?v=yaM3HXw87Ho)
+
 
 
 # Goals:
