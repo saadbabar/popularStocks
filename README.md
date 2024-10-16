@@ -54,7 +54,7 @@ Data Visuals processed by frontend with given data:
 
 ## Video Showcase
 
-[![Watch the video](https://img.youtube.com/vi/yaM3HXw87Ho/maxresdefault.jpg)](https://www.youtube.com/watch?v=yaM3HXw87Ho)
+![Watch the video](https://www.youtube.com/watch?v=yaM3HXw87Ho)
 
 
 
